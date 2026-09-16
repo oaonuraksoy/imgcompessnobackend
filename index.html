@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarayıcı İçi Görsel Optimize Edici</title>
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-color: #1f2937;
+            --border-color: #e5e7eb;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 30px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        h1 {
+            margin-top: 0;
+            text-align: center;
+            color: var(--text-color);
+        }
+
+        .instruction {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 20px;
+        }
+
+        .paste-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            background-color: #f9fafb;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+            position: relative;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .paste-area:hover, .paste-area.dragover {
+            border-color: var(--primary-color);
+            background-color: #eff6ff;
+        }
+
+        #previewImage, #compressedImage {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        select, input[type="range"] {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        button, .download-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 16px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        button:hover, .download-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .compress-btn-container {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .result-area {
+            margin-top: 30px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            background-color: #f0fdf4;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #bbf7d0;
+        }
+
+        .stat-box {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #166534;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #15803d;
+            margin-top: 5px;
+        }
+        
+        .stat-saving {
+            color: #047857;
+        }
+
+        .image-comparison {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .image-container {
+            text-align: center;
+        }
+
+        .image-container h3 {
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: #4b5563;
+        }
+
+        .actions {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Görsel Optimize Edici</h1>
+        <p class="instruction">Bir görseli panodan kopyalayıp (Ctrl+C) bu sayfaya yapıştırın (Ctrl+V veya Cmd+V).</p>
+        
+        <div id="pasteArea" class="paste-area">
+            <div id="pasteText">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <p>Görsel Yapıştırın</p>
+            </div>
+            <img id="previewImage" style="display: none;" />
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="format">Çıktı Formatı</label>
+                <select id="format">
+                    <option value="image/webp">WebP (Web için en iyisi)</option>
+                    <option value="image/jpeg">JPEG</option>
+                    <option value="image/png">PNG (Kayıpsız)</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="quality">Kalite: <span id="qualityVal">80%</span></label>
+                <input type="range" id="quality" min="0.1" max="1" step="0.05" value="0.8">
+            </div>
+            <div class="compress-btn-container">
+                <button id="compressBtn" disabled>Web İçin Optimize Et</button>
+            </div>
+        </div>
+
+        <div id="resultArea" class="result-area" style="display: none;">
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="stat-label">Orijinal Boyut</div>
+                    <div class="stat-value" id="originalSize">0 KB</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Yeni Boyut</div>
+                    <div class="stat-value" id="newSize">0 KB</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Tasarruf</div>
+                    <div class="stat-value stat-saving" id="savings">0%</div>
+                </div>
+            </div>
+
+            <div class="image-comparison">
+                <div class="image-container">
+                    <h3>Sıkıştırılmış Görsel Önizlemesi</h3>
+                    <img id="compressedImage" />
+                </div>
+            </div>
+
+            <div class="actions">
+                <a id="downloadLink" class="download-btn">Sıkıştırılmış Görseli İndir</a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const pasteArea = document.getElementById('pasteArea');
+            const previewImage = document.getElementById('previewImage');
+            const pasteText = document.getElementById('pasteText');
+            const compressBtn = document.getElementById('compressBtn');
+            const qualityInput = document.getElementById('quality');
+            const qualityVal = document.getElementById('qualityVal');
+            const formatSelect = document.getElementById('format');
+            
+            const resultArea = document.getElementById('resultArea');
+            const compressedImage = document.getElementById('compressedImage');
+            const originalSizeSpan = document.getElementById('originalSize');
+            const newSizeSpan = document.getElementById('newSize');
+            const savingsSpan = document.getElementById('savings');
+            const downloadLink = document.getElementById('downloadLink');
+
+            let originalFile = null;
+            let originalDataUrl = null;
+            let originalBytes = 0;
+
+            // Handle paste event globally
+            window.addEventListener('paste', (e) => {
+                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                for (let index in items) {
+                    const item = items[index];
+                    if (item.kind === 'file' && item.type.startsWith('image/')) {
+                        const blob = item.getAsFile();
+                        processFile(blob);
+                        break; // Only process the first image found
+                    }
+                }
+            });
+
+            // Also support drag and drop
+            pasteArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                pasteArea.classList.add('dragover');
+            });
+
+            pasteArea.addEventListener('dragleave', () => {
+                pasteArea.classList.remove('dragover');
+            });
+
+            pasteArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                pasteArea.classList.remove('dragover');
+                
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    const file = e.dataTransfer.files[0];
+                    if (file.type.startsWith('image/')) {
+                        processFile(file);
+                    } else {
+                        alert('Lütfen sadece görsel dosyaları sürükleyin.');
+                    }
+                }
+            });
+
+            function processFile(file) {
+                originalFile = file;
+                originalBytes = file.size;
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    originalDataUrl = event.target.result;
+                    previewImage.src = originalDataUrl;
+                    previewImage.style.display = 'block';
+                    pasteText.style.display = 'none';
+                    compressBtn.disabled = false;
+                    originalSizeSpan.textContent = formatBytes(originalBytes);
+                    
+                    // Hide result area if a new image is pasted
+                    resultArea.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+
+            qualityInput.addEventListener('input', (e) => {
+                qualityVal.textContent = Math.round(e.target.value * 100) + '%';
+            });
+            
+            formatSelect.addEventListener('change', (e) => {
+                if(e.target.value === 'image/png') {
+                    qualityInput.disabled = true;
+                    qualityVal.textContent = 'Desteklenmiyor (Kayıpsız)';
+                } else {
+                    qualityInput.disabled = false;
+                    qualityVal.textContent = Math.round(qualityInput.value * 100) + '%';
+                }
+            });
+
+            compressBtn.addEventListener('click', () => {
+                if (!originalDataUrl) return;
+
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    
+                    // Optional: You can also add image resizing logic here if needed
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Fill background for transparent images converting to JPEG
+                    if(formatSelect.value === 'image/jpeg') {
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, width, height);
+                    }
+                    
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const format = formatSelect.value;
+                    let quality = parseFloat(qualityInput.value);
+                    
+                    if(format === 'image/png') quality = undefined; // PNG doesn't use quality param in toDataURL
+
+                    const compressedDataUrl = canvas.toDataURL(format, quality);
+                    compressedImage.src = compressedDataUrl;
+                    
+                    // Calculate size of base64 string accurately
+                    const base64str = compressedDataUrl.split(',')[1];
+                    const decoded = atob(base64str);
+                    const newBytes = decoded.length;
+
+                    newSizeSpan.textContent = formatBytes(newBytes);
+                    
+                    // Calculate savings
+                    if (originalBytes > 0) {
+                        const savings = ((originalBytes - newBytes) / originalBytes) * 100;
+                        if (savings > 0) {
+                            savingsSpan.textContent = savings.toFixed(1) + '%';
+                            savingsSpan.style.color = '#047857'; // Green
+                        } else {
+                            savingsSpan.textContent = 'Daha büyük (' + Math.abs(savings).toFixed(1) + '%)';
+                            savingsSpan.style.color = '#dc2626'; // Red
+                        }
+                    }
+                    
+                    // Setup download link
+                    downloadLink.href = compressedDataUrl;
+                    const ext = format.split('/')[1];
+                    
+                    // Create a safe filename
+                    let originalName = 'image';
+                    if (originalFile && originalFile.name) {
+                        originalName = originalFile.name.split('.')[0];
+                    }
+                    downloadLink.download = `${originalName}-optimized.${ext}`;
+                    
+                    resultArea.style.display = 'block';
+                    
+                    // Scroll to results
+                    resultArea.scrollIntoView({ behavior: 'smooth' });
+                };
+                img.src = originalDataUrl;
+            });
+
+            function formatBytes(bytes, decimals = 2) {
+                if (!+bytes) return '0 Bytes';
+                const k = 1024;
+                const dm = decimals < 0 ? 0 : decimals;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+            }
+        });
+    </script>
+</body>
+</html>
